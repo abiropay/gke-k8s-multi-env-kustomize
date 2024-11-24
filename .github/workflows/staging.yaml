@@ -1,9 +1,17 @@
 name: Docker build and push to staging
 
 on:
-  pull_request:
+  workflow_dispatch:
+    inputs:
+      runner_number:
+        description: github runner number.
+        required: true
+        default: "1"
+  push:
     branches:
       - main
+      - staging
+  pull_request:
 
 permissions:
       id-token: write # This is required for aws oidc connection
