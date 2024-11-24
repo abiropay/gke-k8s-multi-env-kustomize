@@ -49,7 +49,7 @@ jobs:
     - name: Set up GKE credentials
       uses: google-github-actions/get-gke-credentials@v1
       with:
-        cluster_name: '${{env.GKE_CLUSTER_STAGING}}'
+        cluster_name: '${{secrets.GKE_CLUSTER_STAGING}}'
         location: ${{ env.GKE_REGION }}
 
     - uses: yokawasa/action-setup-kube-tools@v0.11.1
