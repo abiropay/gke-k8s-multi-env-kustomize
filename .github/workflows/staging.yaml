@@ -1,37 +1,48 @@
-name: Validate Kubernetes Manifests
+name: Docker build and push to staging
+
+on:
+  pull_request:
+    branches:
+      - main
+
 permissions:
       id-token: write # This is required for aws oidc connection
       contents: read # This is required for actions/checkout
       pull-requests: write # This is required for gh bot to comment PR
-
-on:
-  workflow_dispatch:
-    inputs:
-      runner_number:
-        description: github runner number.
-        required: true
-        default: "1"
-  push:
-    branches:
-      - main
-  pull_request:
-
 env:
   TF_LOG: INFO
-
+  GKE_REGION: ${{ secrets.GKE_REGION }}
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  CLUSTER_NAME: ${{secrets.GKE_CLUSTER_STAGING}}
+  IMAGE: api-hub
+  IMAGE_TAG: "staging-$(date +'%Y%m%d')-${{github.run_number}}"
+  ECR_STAGING: ${{ secrets.ECR_STAGING }}
 jobs:
   setup-build-publish-deploy:
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./
+    name: Setup, Build, Publish, and Deploy
     runs-on: ubuntu-latest
     environment: staging
-        
+
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
 
-    - uses: google-github-actions/setup-gcloud@1bee7de035d65ec5da40a31f8589e240eba8fde5
+    # Setup gcloud CLI
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v2'
       with:
-        service_account_key: ${{ secrets.GKE_SA_KEY }}
-        project_id: ${{ secrets.GKE_PROJECT }}
+        credentials_json: '${{ secrets.GKE_SA_KEY }}'
+
+    # Get the GKE credentials so we can deploy to the cluster
+    - name: Set up GKE credentials
+      uses: google-github-actions/get-gke-credentials@v1
+      with:
+        cluster_name: '${{env.CLUSTER_NAME}}'
+        location: ${{ env.GKE_REGION }}
 
     - uses: yokawasa/action-setup-kube-tools@v0.11.1
       with:
