@@ -1,0 +1,53 @@
+name: Validate Kubernetes Manifests
+permissions:
+      id-token: write # This is required for aws oidc connection
+      contents: read # This is required for actions/checkout
+      pull-requests: write # This is required for gh bot to comment PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner_number:
+        description: github runner number.
+        required: true
+        default: "1"
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  TF_LOG: INFO
+
+jobs:
+  setup-build-publish-deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+        
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - uses: google-github-actions/setup-gcloud@1bee7de035d65ec5da40a31f8589e240eba8fde5
+      with:
+        service_account_key: ${{ secrets.GKE_SA_KEY }}
+        project_id: ${{ secrets.GKE_PROJECT }}
+
+    - uses: yokawasa/action-setup-kube-tools@v0.11.1
+      with:
+        setup-tools: |
+          kubectl: '1.25'
+          kustomize: '5.0.0'
+          helm: '3.11.1'
+          kubeconform: '0.5.0'
+          
+    # Configure Docker to use the gcloud command-line tool as a credential
+    # helper for authentication
+    - run: |-
+        gcloud --quiet auth configure-docker
+
+    # Get the GKE credentials so we can deploy to the cluster
+    - uses: google-github-actions/get-gke-credentials@db150f2cc60d1716e61922b832eae71d2a45938f
+      with:
+        cluster_name: "ropay-gks-cluster-staging"	
+        location: "europe-west2"
