@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: api-hub
+    app: api-hub
+    env: staging
+  name: api-hub
+  namespace: staging
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-hub
+      env: staging
+  template:
+    metadata:
+      labels:
+        app: api-hub
+        env: staging
+    spec:
+      containers:
+      - image: 338169704984.dkr.ecr.us-east-1.amazonaws.com/tekmir/api-hub:staging-20240717-124
+        name: api-hub
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "256m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 80

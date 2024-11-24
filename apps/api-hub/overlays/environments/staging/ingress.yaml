@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app: api-hub
+    env: staging
+  name: api-hub
+  annotations: 
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  namespace: staging
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: staging.tekmir-map.ai
+    http:
+      paths:
+      - backend:
+          service:
+            name: staging-api-hub
+            port:
+              number: 80
+        path: /api
+        pathType: Prefix
+  tls:
+      - hosts:
+          - staging.tekmir-map.ai
+        secretName: letsencrypt-staging
