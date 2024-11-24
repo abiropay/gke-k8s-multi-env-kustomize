@@ -49,7 +49,7 @@ jobs:
     - name: Set up GKE credentials
       uses: google-github-actions/get-gke-credentials@v1
       with:
-        cluster_name: '${{env.CLUSTER_NAME}}'
+        cluster_name: '${{env.GKE_CLUSTER_STAGING}}'
         location: ${{ env.GKE_REGION }}
 
     - uses: yokawasa/action-setup-kube-tools@v0.11.1
@@ -70,3 +70,14 @@ jobs:
       with:
         cluster_name: "ropay-gks-cluster-staging"	
         location: "europe-west2"
+
+    - name: Configure and build kustomize
+      if: github.ref_name == 'dev' && github.event.inputs.runner_number != ''
+      run : |
+        TAG="staging-$(date +'%Y%m%d')-${{ github.event.inputs.runner_number}}"
+        echo $TAG
+        sed -i "s/staging-20241124-2/$TAG/g" apps/api-hub/base/deployment.yaml
+        cat apps/api-hub/base/deployment.yaml
+        kustomize build apps/api-hub/overlays/environments/staging > api-hub.yml
+        cat api-hub.yml
+        kubectl apply -f api-hub.yml

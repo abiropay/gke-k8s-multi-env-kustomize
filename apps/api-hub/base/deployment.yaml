@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: api-hub
+    app: api-hub
+    env: staging
+  name: api-hub
+  namespace: staging
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: api-hub
+      env: staging
+  template:
+    metadata:
+      labels:
+        app: api-hub
+        env: staging
+    spec:
+      containers:
+      - image: europe-west2-docker.pkg.dev/ropay-441518/ropay-api-staging/api-hub:staging-20241124-2
+        name: api-hub
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "256m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 80
